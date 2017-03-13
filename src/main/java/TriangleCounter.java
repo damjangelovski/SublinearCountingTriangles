@@ -3,16 +3,14 @@ import org.jgrapht.*;
 import org.jgrapht.generate.RandomGraphGenerator;
 import org.jgrapht.graph.*;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.util.*;
 
 public class TriangleCounter {
 
     private static final double c = 1;// for number of iterations, not discussed
-    private static final double c1 = 0.0001; //for s1, TODO: See Theorem 4 and proof, pg. 8/9 counting triangles
-    private static final double c2 = 10; //for s2, sufficiently large, TODO: See pg. 14 counting triangles
-    private static final double ch = 1; //TODO: See Claim 2 proof, pg. 8 counting triangles
+    private static final double c1 = 1; //for s1, TODO: See Theorem 4 and proof, pg. 8/9 counting triangles
+    private static final double c2 = 1; //for s2, sufficiently large, TODO: See pg. 14 counting triangles
+    private static final double ch = 287; //TODO: See Claim 2 proof, pg. 8 counting triangles
 
     private static final double cd = 1;  //for beta; cd>1; TODO: See pg.5 "Approximating Average Parameters of Graphs"
 
@@ -58,7 +56,7 @@ public class TriangleCounter {
         for (Integer v : g.vertexSet()) {
             for (DefaultEdge e : g.edgesOf(v)) {
                 Integer v1 = g.getEdgeSource(e);
-                if (v == v1) {
+                if (v.equals(v1)) {
                     v1 = g.getEdgeTarget(e);
                 }
                 for (DefaultEdge e2 : g.edgesOf(v)) {
@@ -66,7 +64,7 @@ public class TriangleCounter {
                         continue;
                     }
                     Integer v2 = g.getEdgeSource(e2);
-                    if (v == v2) {
+                    if (v.equals(v2)) {
                         v2 = g.getEdgeTarget(e2);
                     }
                     if (g.containsEdge(v2, v1)) {
@@ -100,7 +98,7 @@ public class TriangleCounter {
             b.get(i).add(v);
         }
         for (Map.Entry<Integer, Set<Integer>> entry : b.entrySet()) {
-            if (!(entry.getValue().size() / (1.0 * s.size()) >= Math.sqrt(e * l / (6 * n)) / t)) {
+            if (!(entry.getValue().size() / (1.0 * s.size()) >= Math.sqrt(e * l / (6. * n)) / t)) {
                 b.remove(entry.getKey());
             }
         }
@@ -126,9 +124,9 @@ public class TriangleCounter {
 
     //counting triangles, page 15
     public static double estimate(double e) {
-        double e1 = e / (3 * ch);
+        double e1 = e / (3. * ch);
         double d = getAvgDeg(); //TODO: change to sub-linear algorithm.
-        double m = n * d / 2;
+        double m = n * d / 2.;
         double t = n * n * n;
         while (t >= 1) {
             double x = n * n * n;
@@ -142,18 +140,22 @@ public class TriangleCounter {
             if (x >= t) {
                 return x;
             }
-            t = t / 2;
+            t = t / 2.;
         }
         return -1;
     }
 
     //counting triangles, page 12
     private static double estimateWithAdvice(double m, double t, double e) {
-        double s1 = c1 * Math.pow(e, -3) * Math.log(n / e) * (n / Math.pow(t, -1 / 3));
-        double s2 = c2 * Math.pow(e, -4) * Math.pow(Math.log(n), 2) * (Math.pow(m, 3 / 2) / t);
+        double s1 = (c1 * Math.pow(e, -3) / Math.log(n / e)) * Math.log(n / Math.pow(t, 1 / 3.)); // log base is n/e
+        double s11 = c1 * Math.pow(e, -3) * Math.log(n / e) / Math.log(n / Math.pow(t, 1 / 3.)); // log base is n/t^(1/3)
+        double s12 = c1 * Math.pow(e, -3) * Math.log(n / e) * (n / Math.pow(t, 1 / 3.)); // log base is e
+        double s2 = c2 * Math.pow(e, -4) * Math.pow(Math.log(n), 2) * (Math.pow(m, 3 / 2.) / t);
+        double ch=binomial((int)Math.pow(t,1/3.)*12,3)/(t);
+        System.out.println("estimateWithAdvice started t="+t+" s1="+s1+" s2="+s2+" s11="+s11+" s12="+s12+" new ch="+ch);
 
-        //System.out.println("estimateWithAdvice started t="+t+" s1="+s1+" s2="+s2);
-        S s = new S(g, (int) s1, rand);
+
+        S s = new S(g, 1+(int) s1, rand); //TODO: change second argument with the correct s1 formula
         double y = 0;
 
         for (int i = 1; i <= s2; i++) {
@@ -191,9 +193,9 @@ public class TriangleCounter {
                 }
                 Integer w = getOtherEndpoint(randE2, u);
                 bannedVertexes.add(w);
-                if (g.containsEdge(v, w) && g.containsEdge(x, w) && x == getSmallerEndpoint(x, w)) {
+                if (g.containsEdge(v, w) && g.containsEdge(x, w) && x.equals(getSmallerEndpoint(x, w))) {
                     int isWLight = isHeavy(w, m, e, t) ? 0 : 1;
-                    z += Math.max(edgesU.length, Math.sqrt(m)) / (1 + isXLight + isWLight);
+                    z += Math.max(edgesU.length, Math.sqrt(m)) / (1. + isXLight + isWLight);
                 }
 
             }
@@ -205,13 +207,13 @@ public class TriangleCounter {
     //counting triangles, page 9
     private static boolean isHeavy(Integer v, double m, double e, double t) {
         DefaultEdge[] edgesV = g.edgesOf(v).toArray(new DefaultEdge[0]);
-        if (edgesV.length > 2 * m / Math.pow(e * t, 1 / 3)) {
+        if (edgesV.length > 2 * m / Math.pow(e * t, 1 / 3.)) {
             return true;
         }
         Set<Double> setX = new HashSet<Double>();
         for (int i = 1; i <= 10 * Math.log(n); i++) {
             double Xi = 0;
-            for (int j = 1; j <= 20 * Math.pow(m, 3 / 2) / (t * e * e); j++) {
+            for (int j = 1; j <= 20 * Math.pow(m, 3 / 2.) / (t * e * e); j++) {
                 double Yj = 0;
                 DefaultEdge randE = edgesV[rand.nextInt(edgesV.length)];
                 Integer u = getSmallerEndpoint(randE);
@@ -227,20 +229,20 @@ public class TriangleCounter {
                     }
                     Integer w = getOtherEndpoint(randE2, u);
                     bannedVertexes.add(w);
-                    if (g.containsEdge(v, w) && g.containsEdge(x, w) && x == getSmallerEndpoint(x, w)) {
+                    if (g.containsEdge(v, w) && g.containsEdge(x, w) && x.equals(getSmallerEndpoint(x, w))) {
                         Yj += edgesU.length;
                     }
                 }
                 Yj = Yj / (edgesU.length / Math.sqrt(m));
                 Xi += Yj;
             }
-            Xi = Xi * edgesV.length / (20 * Math.pow(m, 3 / 2) / (t * e * e));
+            Xi = Xi * edgesV.length / (20 * Math.pow(m, 3 / 2.) / (t * e * e));
             setX.add(Xi);
         }
         Double[] arrX = setX.toArray(new Double[0]);
         Arrays.sort(arrX);
         double median = median(arrX);
-        if (median > Math.pow(t, 2 / 3) / Math.pow(e, 1 / 3)) {
+        if (median > Math.pow(t, 2 / 3.) / Math.pow(e, 1 / 3.)) {
             return true;
         }
         return false;
@@ -317,5 +319,16 @@ public class TriangleCounter {
         } else {
             return (m[middle - 1] + m[middle]) / 2.0;
         }
+    }
+
+    private static long binomial(int n, int k)
+    {
+        if (k>n-k)
+            k=n-k;
+
+        long b=1;
+        for (int i=1, m=n; i<=k; i++, m--)
+            b=b*m/i;
+        return b;
     }
 }
