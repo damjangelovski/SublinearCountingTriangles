@@ -8,7 +8,7 @@ class IntVertexFactory implements VertexFactory {
         count = 0;
     }
 
-    @Override
+
     public Integer createVertex() {
         return count++;
     }
