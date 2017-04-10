@@ -13,9 +13,11 @@ import java.util.*;
 public class TriangleCounter {
 
     private static final double c = 1;// for number of iterations, not discussed
+
     private static final double c1 = 2000; //for s1, TODO: See Theorem 4 and proof, pg. 8/9 counting triangles
     private static final double c2 = 2000; //for s2, sufficiently large, TODO: See pg. 14 counting triangles
     private static final double ch = 100; //TODO: See Claim 2 proof, pg. 8 counting triangles
+
 
     private static final double cd = 1;  //for beta; cd>1; TODO: See pg.5 "Approximating Average Parameters of Graphs"
 
@@ -194,7 +196,7 @@ public class TriangleCounter {
             }
             for (DefaultEdge e : g.edgesOf(v)) {
                 Integer v1 = g.getEdgeSource(e);
-                if (v == v1) {
+                if (v.equals(v1)) {
                     v1 = g.getEdgeTarget(e);
                 }
                 for (DefaultEdge e2 : g.edgesOf(v)) {
@@ -202,7 +204,7 @@ public class TriangleCounter {
                         continue;
                     }
                     Integer v2 = g.getEdgeSource(e2);
-                    if (v == v2) {
+                    if (v.equals(v2)) {
                         v2 = g.getEdgeTarget(e2);
                     }
                     if (g.containsEdge(v2, v1)) {
@@ -236,7 +238,7 @@ public class TriangleCounter {
             b.get(i).add(v);
         }
         for (Map.Entry<Integer, Set<Integer>> entry : b.entrySet()) {
-            if (!(entry.getValue().size() / (1.0 * s.size()) >= Math.sqrt(e * l / (6 * n)) / t)) {
+            if (!(entry.getValue().size() / (1.0 * s.size()) >= Math.sqrt(e * l / (6. * n)) / t)) {
                 b.remove(entry.getKey());
             }
         }
@@ -260,7 +262,8 @@ public class TriangleCounter {
         return sum/k;
     }
 
-    //counting triangles, page 15
+	
+	    //counting triangles, page 15
     public static double estimate(double e) {
         double e1 = e;// / (3 * ch);
         double d = getAvgDeg(); //TODO: change to sub-linear algorithm.
@@ -385,6 +388,11 @@ public class TriangleCounter {
 
         return (n / (double) ((int) s1 * (int) s2)) * s.getDegreeSum() * y;
     }
+	
+	
+	
+	
+	
     private static int unwrap(boolean b1,boolean b2, boolean b3){
         return Byte.parseByte(String.format("%d%d%d",makeInt(b1),makeInt(b2),makeInt(b3)),2);
 
@@ -392,6 +400,8 @@ public class TriangleCounter {
     private static int makeInt(boolean b){
         return (b) ? 1 : 0;
     }
+
+
 
     //counting triangles, page 9
     private static boolean isHeavy_Kiko(Integer v, double m, double e, double t) {
@@ -559,5 +569,16 @@ public class TriangleCounter {
         } else {
             return (m[middle - 1] + m[middle]) / 2.0;
         }
+    }
+
+    private static long binomial(int n, int k)
+    {
+        if (k>n-k)
+            k=n-k;
+
+        long b=1;
+        for (int i=1, m=n; i<=k; i++, m--)
+            b=b*m/i;
+        return b;
     }
 }
