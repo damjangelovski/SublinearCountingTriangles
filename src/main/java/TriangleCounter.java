@@ -12,7 +12,7 @@ public class TriangleCounter {
     private static final double c2 = 1; //for s2, sufficiently large, TODO: See pg. 14 counting triangles
     private static final double ch = 287; //TODO: See Claim 2 proof, pg. 8 counting triangles
 
-    private static final double cd = 1;  //for beta; cd>1; TODO: See pg.5 "Approximating Average Parameters of Graphs"
+    private static final double cd = 100;  //for beta; cd>1; TODO: See pg.5 "Approximating Average Parameters of Graphs"
 
     private static Random rand;
     private static long startTime;
@@ -36,13 +36,14 @@ public class TriangleCounter {
         startTime = System.currentTimeMillis();
         System.out.println("Approximate average degree with e=0.5 is: " + averageDegreeApproximation(0.5));
         System.out.println("Sub-linear average degree finished in: " + (System.currentTimeMillis() - startTime) + " milliseconds");
-        startTime = System.currentTimeMillis();
+
+        /*startTime = System.currentTimeMillis();
         System.out.println("Triangle estimate with e=1 is: " + estimate(1));
         System.out.println("Sub-linear triangle count finished in: " + (System.currentTimeMillis() - startTime) + " milliseconds");
         startTime = System.currentTimeMillis();
         System.out.println("True No. of triangles is: "+getNumTriangles());
         System.out.println("superLinear triangle count finished in: " + (System.currentTimeMillis() - startTime) + " milliseconds");
-
+*/
     }
 
     //not sub-linear
@@ -81,45 +82,65 @@ public class TriangleCounter {
         double l = 1; //lower bound on average degree. With no previous information, put 1
         double beta=e/cd;
         double k = Math.sqrt(n / l) * Math.pow(e, -4.5) * Math.pow(Math.log(n), 2) * Math.log(1 / e);
-        int t = (int) Math.ceil(Math.log(n) / Math.log1p(1 + beta)) + 1;
+        //double k = 500;
+        int t = (int) Math.ceil(Math.log(n) / Math.log1p(beta)) + 1;
 
         Set<Integer> s = new HashSet<Integer>((int) k);
         Map<Integer, Set<Integer>> b = new HashMap<Integer, Set<Integer>>();
         Integer[] allV = g.vertexSet().toArray(new Integer[0]);
 
+        System.out.println("size of sample is: "+k);
+        System.out.println("beta is: "+beta);
+        System.out.println("t is: "+t);
+        System.out.println("Max i is: "+Math.ceil(Math.log(n) / Math.log1p(beta)));
+        System.out.println("Bucket percentage needs to be bigger than "+Math.sqrt(e * l / (6. * n)) / t);
         for (int j = 1; j <= k; j++) {
             int v = allV[rand.nextInt(n)];
             s.add(v);
             int dv = g.edgesOf(v).size();
-            int i = (int) Math.ceil(Math.log(dv) / Math.log1p(1 + beta));
+            int i = (int) Math.ceil(Math.log(dv) / Math.log1p(beta));
             if (b.get(i) == null) {
                 b.put(i, new HashSet<Integer>());
             }
             b.get(i).add(v);
         }
+        int numNodes=0;
         for (Map.Entry<Integer, Set<Integer>> entry : b.entrySet()) {
+            int i=entry.getKey();
+            numNodes+=entry.getValue().size();
+            System.out.println("for i="+i+" degree is between "+Math.ceil(Math.pow(1+beta,i-1))+" and "
+                    +Math.floor(Math.pow(1+beta,i)) +" Bi size is: "+entry.getValue().size());
             if (!(entry.getValue().size() / (1.0 * s.size()) >= Math.sqrt(e * l / (6. * n)) / t)) {
                 b.remove(entry.getKey());
+                System.out.println("is deleted");
             }
         }
+        System.out.println("number of nodes is "+numNodes);
         Set<Integer> L=b.keySet();
         double sum=0;
         for (Map.Entry<Integer, Set<Integer>> entry : b.entrySet()) {
             double ai=0;
+            double bi=0;
             for (Integer v : entry.getValue()) {
                 DefaultEdge[] edgesV = g.edgesOf(v).toArray(new DefaultEdge[0]);
                 DefaultEdge randE = edgesV[rand.nextInt(edgesV.length)];
                 Integer u = getOtherEndpoint(randE, v);
                 int du = g.edgesOf(v).size();
-                Integer j=(int) Math.ceil(Math.log(du) / Math.log1p(1 + beta));
+                Integer j=(int) Math.ceil(Math.log(du) / Math.log1p(beta));
                 if(!L.contains(j)){
                     ai++;
                 }
+                else {
+                    bi++;
+                }
             }
+            System.out.println("for i: "+entry.getKey()+" ai:"+ai+" bi:"+bi);
             ai/=entry.getValue().size();
             sum+=(1+ai)*entry.getValue().size()*Math.pow(1+beta,entry.getKey());
         }
-        return sum/k;
+        //numNodes is the real size of the sample, as duplicate sample nodes are not counted
+        //return sum/k;
+        return sum/numNodes;
     }
 
     //counting triangles, page 15
